@@ -159,6 +159,19 @@ label.lbl{display:block;font-size:13px;color:var(--muted);margin:14px 0 6px;font
 .toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.on{opacity:1}
 @media (prefers-reduced-motion: reduce){.toast{transition:none}}
+.wk{background:var(--surface);border-radius:16px;margin-bottom:8px;border:2px solid transparent}
+.wk.cur{border-color:var(--lime)}
+.wk-head{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;padding:12px 14px}
+.dots{display:flex;gap:5px;flex:none}
+.dd{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;background:var(--bg);color:var(--muted);border:2px solid var(--line)}
+.dd.ok{background:var(--lime);border-color:var(--lime);color:var(--lime-ink)}
+.dd.miss{opacity:.45;text-decoration:line-through}
+.badge.dark{background:var(--text);color:var(--bg)}
+.wk-day{padding:4px 14px 10px}
+.wk-day > b{display:block;font-size:14px;margin:6px 0 4px}
+.wk-ex{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:5px 0;border-bottom:1px solid var(--line)}
+.wk-ex span:last-child{font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+nav.tabs button{font-size:13px;padding:10px 4px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:-6px 0 8px}
 .stat{background:var(--surface);border-radius:14px;padding:10px 6px;text-align:center}
 .stat b{display:block;font-family:Unbounded,"Arial Black",sans-serif;font-size:20px;font-variant-numeric:tabular-nums;line-height:1.2}
@@ -204,31 +217,32 @@ const DAYS = [
   {id:"fri", short:"Пт", full:"Пятница", wd:5}
 ];
 const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
-const PROGRAM_VERSION = 2;
-const mk = (name, icon, n, r, w, rest) => ({id:uid(), name, icon, rest:rest||60, sets:Array.from({length:n||4},()=>({w:w==null?"":String(w), r:String(r||10)}))});
+const PROGRAM_VERSION = 3;
+const mk = (name, icon, n, r, w, rest, plan) => ({id:uid(), name, icon, rest:rest||60, plan:plan||null, sets:Array.from({length:n||4},()=>({w:w==null?"":String(w), r:String(r||10)}))});
 
 function defaultState(){
   return {
     program:{
-      mon:{name:"Грудь, плечи, трицепс", exercises:[
-        mk("Жим штанги лёжа","bench",5,5,55,150),
-        mk("Жим гантелей на наклонной скамье","incline",4,8,12,60),
-        mk("Жим на плечи в тренажёре Matrix","shoulder",4,8,"",60),
-        mk("Разведения в тренажёре Matrix (баттерфляй)","fly",4,10,"",60),
+      mon:{name:"Тяжёлый день", exercises:[
+        mk("Приседания со штангой","squat",5,5,50,165,{start:50,target:75,sets:5,reps:5,test:true}),
+        mk("Жим штанги лёжа","bench",5,5,55,165,{start:55,target:70,sets:5,reps:5,test:true}),
+        mk("Тяга штанги в наклоне","row",4,8,40,120,{start:40,target:55,sets:4,reps:8}),
+        mk("Жим гантелей на наклонной скамье","incline",3,8,14,90,{start:14,target:20,sets:3,reps:8,step:2}),
+        mk("Подъём штанги на бицепс","curl",3,10,20,60,{start:20,target:27.5,sets:3,reps:10})]},
+      wed:{name:"Спина и плечи", exercises:[
+        mk("Румынская тяга со штангой","rdl",4,8,40,120,{start:40,target:70,sets:4,reps:8}),
+        mk("Жим штанги стоя (армейский)","ohp",4,6,30,120,{start:30,target:40,sets:4,reps:6}),
+        mk("Подтягивания","pullup",5,7,"",90,{kind:"reps",start:7,target:10,sets:5,testSets:3,testReps:12}),
+        mk("Жим ногами в тренажёре Matrix","legpress",4,10,"",90),
         mk("Разгибание рук на верхнем блоке","pushdown",4,10,"",60)]},
-      wed:{name:"Спина, бицепс", exercises:[
-        mk("Тяга штанги в наклоне","row",5,5,40,150),
-        mk("Тяга верхнего блока к груди","pulldown",4,8,"",60),
-        mk("Горизонтальная тяга в тренажёре Matrix","seatrow",4,8,"",60),
-        mk("Подъём штанги на бицепс","curl",4,10,20,60),
-        mk("Обратные разведения в тренажёре Matrix","rfly",4,12,"",60)]},
-      fri:{name:"Ноги", exercises:[
-        mk("Приседания со штангой","squat",5,5,40,150),
-        mk("Жим ногами в тренажёре Matrix","legpress",4,10,"",60),
-        mk("Сгибание ног лёжа","legcurl",4,10,"",60),
-        mk("Разгибание ног сидя","legext",4,12,"",60),
-        mk("Подъём на носки в тренажёре","calf",4,12,"",60)]}
+      fri:{name:"Объёмный день", exercises:[
+        mk("Приседания со штангой (объём)","squat",4,8,42.5,120,{start:42.5,target:62.5,sets:4,reps:8}),
+        mk("Жим штанги лёжа (объём)","bench",4,8,47.5,120,{start:47.5,target:60,sets:4,reps:8}),
+        mk("Горизонтальная тяга в тренажёре Matrix","seatrow",4,10,"",90),
+        mk("Выпады с гантелями","lunge",3,10,10,90,{start:10,target:16,sets:3,reps:10,step:2}),
+        mk("Обратные разведения в тренажёре Matrix","rfly",4,12,"",60)]}
     },
+    planStart:weekStart(),
     programVersion:PROGRAM_VERSION,
     records:{},   // exId -> {w,r,date,name}
     history:[],   // newest first
@@ -253,7 +267,7 @@ function saveMain(){
   clearTimeout(mainTimer);
   mainTimer = setTimeout(async ()=>{
     try{
-      await db.doc(base+"/main").set({program:S.program, records:S.records, programVersion:S.programVersion||1});
+      await db.doc(base+"/main").set({program:S.program, records:S.records, programVersion:S.programVersion||1, planStart:S.planStart||null});
       await db.doc(base+"/active").set({session:S.active ? JSON.stringify(S.active) : ""});
       setSync("Сохранено");
     }catch(e){ setSync("Сохранено на устройстве"); }
@@ -297,7 +311,7 @@ async function init(){
       for(const doc of docs){
         const key = doc.id || (doc.ref && doc.ref.id) || "";
         const v = doc.data ? doc.data() : null; if(!v) continue;
-        if(key === "main"){ if(v.program) S.program = v.program; if(v.records) S.records = v.records; S.programVersion = v.programVersion||1; }
+        if(key === "main"){ if(v.program) S.program = v.program; if(v.records) S.records = v.records; S.programVersion = v.programVersion||1; if(v.planStart) S.planStart = v.planStart; }
         else if(key === "active"){ S.active = v.session ? JSON.parse(v.session) : null; }
         else if(key.startsWith("h_")){ try{ hist.push(JSON.parse(v.entry)); }catch(e){} }
         else if(key.startsWith("p_")){ if(v.src) photos[key.slice(2)] = v.src; }
@@ -316,7 +330,36 @@ async function init(){
 }
 
 function migrate(){
-  if((S.programVersion||1) < PROGRAM_VERSION){ S.program = defaultState().program; S.programVersion = PROGRAM_VERSION; saveMain(); }
+  if((S.programVersion||1) < PROGRAM_VERSION){
+    const byName = {};
+    for(const k in S.program) for(const e of S.program[k].exercises) byName[e.name] = e.id;
+    const np = defaultState().program;
+    for(const k in np) for(const e of np[k].exercises) if(byName[e.name]) e.id = byName[e.name];
+    S.program = np; S.programVersion = PROGRAM_VERSION; S.planStart = weekStart(); saveMain();
+  }
+}
+/* ---------- 12-week plan ---------- */
+const PLAN_WEEKS = 12, DELOAD = 7, PROG_WEEKS = [1,2,3,4,5,6,8,9,10,11,12];
+function planWeek(at){
+  if(!S.planStart) return null;
+  const w = Math.floor(((at||Date.now()) - S.planStart)/(7*864e5)) + 1;
+  return w < 1 ? 1 : (w > PLAN_WEEKS ? null : w);
+}
+function planFor(e, wk){
+  const pl = e.plan; if(!pl || !wk) return null;
+  const step = pl.step || 2.5, rnd = v => Math.round(v/step)*step;
+  const lin = k => pl.start + (pl.target - pl.start)*k/10;
+  let sets = pl.sets, v;
+  if(wk === DELOAD){ sets = Math.max(2, sets-1); v = pl.kind==="reps" ? Math.max(3, Math.round(lin(5))-2) : rnd(lin(5)*0.8); }
+  else v = pl.kind==="reps" ? Math.round(lin(PROG_WEEKS.indexOf(wk))) : rnd(lin(PROG_WEEKS.indexOf(wk)));
+  if(wk === PLAN_WEEKS && pl.test) sets = 1;
+  if(wk === PLAN_WEEKS && pl.kind==="reps" && pl.testSets){ sets = pl.testSets; v = pl.testReps; }
+  return pl.kind==="reps" ? {sets, r:v, w:""} : {sets, r:pl.reps, w:v};
+}
+const weekTag = wk => wk===DELOAD ? "разгрузка" : wk===PLAN_WEEKS ? "проверка" : "";
+function planText(e, wk){
+  const p = planFor(e, wk); if(!p) return "вес подбираешь сам";
+  return p.w==="" ? `${p.sets} × ${p.r}` : `${p.sets} × ${p.r} · ${fmtW(p.w)} кг`;
 }
 
 /* ---------- helpers ---------- */
@@ -360,6 +403,7 @@ function weekStart(){ const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.get
 const tonnage = exs => exs.reduce((t,e)=>t+e.sets.filter(s=>s.done).reduce((a,s)=>a+num(s.w)*num(s.r),0),0);
 const fmtTon = t => t>=1000 ? (t/1000).toFixed(1).replace(".",",")+" т" : Math.round(t)+" кг";
 function canBump(e, lt){
+  if(e.planNote) return false;
   if(!lt || e.bumped || e.sets.some(s=>s.done)) return false;
   const ls = lt.e.sets;
   if(!ls.length || !ls.every(s=>s.done) || ls.length < e.sets.length) return false;
@@ -391,6 +435,10 @@ const ICONS = {
   legpress: P('<path d="M6 41h12L10 22"/>'+H(11,17)+'<path d="M12 21l6 15 8-10 11 2"/><path class="k" d="M33 21l8 13"/>'),
   legcurl: P('<path d="M6 33h34M10 33v8M36 33v8"/>'+H(9,27)+'<path d="M13 29h23l-4-12"/><path class="k" d="M28 15h8"/>'),
   legext: P('<path d="M14 12v20h14"/>'+H(19,9)+'<path d="M19 13v17h11l12-3M19 17l5 8"/><path class="k" d="M41 22v9"/>'),
+  rdl: P(H(12,14)+'<path d="M15 16l15 7v19M18 18l2 13"/><path class="k" d="M12 32h16M13 28v8M27 28v8"/>'),
+  ohp: P(H(24,14)+'<path d="M24 18v14l-4 11M24 32l4 11M24 21l-8-5V7M24 21l8-5V7"/><path class="k" d="M10 7h28M12 3v8M36 3v8"/>'),
+  pullup: P('<path class="k" d="M6 6h36"/>'+H(24,17)+'<path d="M24 21v13l-3 10M24 34l3 10M24 22l-8-8-2-8M24 22l8-8 2-8"/>'),
+  lunge: P(H(22,8)+'<path d="M22 12v16l10 2v11M22 28l-8 9-4 3M22 16v10"/><path class="k" d="M18 26h8M19 23v6M25 23v6"/>'),
   calf: P(H(22,8)+'<path d="M22 12v16v10l3 3M22 16l-6-3M22 16l6-3"/><path class="k" d="M13 12h18M18 42h14"/>')
 };
 function iconFor(id){ for(const k in S.program){ const e = S.program[k].exercises.find(x=>x.id===id); if(e) return e.icon; } return null; }
@@ -419,10 +467,11 @@ function render(){
   if(view.tab==="edit") return renderEditor();
   if(view.tab==="backup") return renderBackup();
   const tabs = `<nav class="tabs" role="tablist">
-    ${[["home","Тренировки"],["history","История"],["records","Рекорды"]].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${view.tab===k}">${l}</button>`).join("")}
+    ${[["home","Тренировки"],["plan","План"],["history","История"],["records","Рекорды"]].map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${view.tab===k}">${l}</button>`).join("")}
   </nav>`;
   let body = "";
   if(view.tab==="home") body = renderHome();
+  if(view.tab==="plan") body = renderPlan();
   if(view.tab==="history") body = renderHistory();
   if(view.tab==="records") body = renderRecords();
   app.innerHTML = tabs + body;
@@ -436,7 +485,7 @@ function renderHome(){
   const now = new Date(), mS = new Date(now.getFullYear(), now.getMonth(), 1).getTime(), yS = new Date(now.getFullYear(), 0, 1).getTime();
   const mo = S.history.filter(h=>h.start>=mS).length, yr = S.history.filter(h=>h.start>=yS).length;
   const tile = (n,l,hl) => `<div class="stat ${hl?"hl":""}"><b>${n}</b><span>${l}</span></div>`;
-  return banner + `<div class="stats">${tile(wk+"/3","неделя",wk>=3)}${tile(mo,"месяц")}${tile(yr,"год")}${tile(S.history.length,"всего")}</div><p class="muted small" style="margin:0 0 14px">${wk>=3?"Неделя выполнена 🔥 · ":""}${last ? `Последняя тренировка: ${esc(fmtDate(last.start))}` : "Пока ни одной тренировки — начнём?"}</p>` +
+  return banner + `<div class="stats">${tile(wk+"/3","неделя",wk>=3)}${tile(mo,"месяц")}${tile(yr,"год")}${tile(S.history.length,"всего")}</div><p class="muted small" style="margin:0 0 14px">${planWeek() ? `<b style="color:var(--lime-text)">Неделя ${planWeek()} из 12${weekTag(planWeek()) ? " · "+weekTag(planWeek()) : ""}</b> · ` : ""}${wk>=3?"Неделя выполнена 🔥 · ":""}${last ? `Последняя тренировка: ${esc(fmtDate(last.start))}` : "Пока ни одной тренировки — начнём?"}</p>` +
   DAYS.map(d=>{
     const p = S.program[d.id];
     const today = d.wd===wd;
@@ -465,7 +514,7 @@ function renderBackup(){
     <textarea id="bkin" class="text-in" placeholder="…или вставьте сюда текст копии" style="height:100px;margin-top:10px;font-size:16px;font-weight:400"></textarea>
     <div class="row-acts"><button class="btn btn-dark" data-importtext>Восстановить из текста</button></div></div>`;
 }
-const exportJSON = () => JSON.stringify({app:"mmfitness", v:1, program:S.program, programVersion:S.programVersion, records:S.records, history:S.history, photos:S.photos});
+const exportJSON = () => JSON.stringify({app:"mmfitness", v:1, program:S.program, programVersion:S.programVersion, planStart:S.planStart, records:S.records, history:S.history, photos:S.photos});
 function downloadBackup(json){
   const name = "mmfitness-" + new Date().toISOString().slice(0,10) + ".json";
   try{
@@ -480,7 +529,7 @@ async function importJSON(txt){
   if(!data || !data.program || !Array.isArray(data.history)){ toast("Это не копия ММ.ФИТНЕС"); return; }
   if(!(await ask(`Восстановить копию (${data.history.length} тренировок)? Текущие данные будут заменены.`, "Восстановить"))) return;
   const oldIds = S.history.map(h=>h.id);
-  S = Object.assign(defaultState(), {program:data.program, programVersion:data.programVersion||PROGRAM_VERSION, records:data.records||{}, history:data.history, photos:data.photos||{}, active:null});
+  S = Object.assign(defaultState(), {program:data.program, programVersion:data.programVersion||PROGRAM_VERSION, records:data.records||{}, planStart:data.planStart||weekStart(), history:data.history, photos:data.photos||{}, active:null});
   stopRest(); saveMain(); lsSave();
   if(db){
     try{
@@ -495,6 +544,35 @@ document.getElementById("backupInput").onchange = ev => {
   const f = ev.target.files[0]; ev.target.value = "";
   if(f) f.text().then(importJSON);
 };
+
+function renderPlan(){
+  const cur = planWeek(), DOFF = {mon:0, wed:2, fri:4};
+  if(view.openWeek == null) view.openWeek = cur || 1;
+  const dayKey = ts => new Date(ts).toDateString();
+  const doneDays = new Set(S.history.map(h=>h.dayId+"|"+dayKey(h.start)));
+  const today = new Date(); today.setHours(0,0,0,0);
+  let out = `<div class="card"><h2>12 недель: масса + сила</h2>
+    <p class="muted small" style="margin:6px 0 0">Цель к 12-й неделе: жим лёжа 70 кг × 5, присед 75 кг × 5, подтягивания 3 × 12. Неделя 7 — разгрузка, неделя 12 — проверка.</p></div>`;
+  for(let wk=1; wk<=PLAN_WEEKS; wk++){
+    const ws = S.planStart + (wk-1)*7*864e5, we = ws + 6*864e5;
+    const open = view.openWeek===wk, tag = weekTag(wk);
+    const dots = DAYS.map(d=>{
+      const dt = new Date(ws + DOFF[d.id]*864e5);
+      const st = doneDays.has(d.id+"|"+dt.toDateString()) ? "ok" : (dt < today ? "miss" : "");
+      return `<span class="dd ${st}">${d.short}</span>`;
+    }).join("");
+    out += `<section class="wk ${wk===cur?"cur":""}">
+      <button class="wk-head" data-week="${wk}" aria-expanded="${open}">
+        <div><b>Неделя ${wk}</b>${tag?`<span class="badge">${tag}</span>`:""}${wk===cur?'<span class="badge dark">сейчас</span>':""}
+        <div class="muted small">${new Date(ws).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})} – ${new Date(we).toLocaleDateString("ru-RU",{day:"numeric",month:"short"})}</div></div>
+        <div class="dots">${dots}</div>
+      </button>
+      ${open ? DAYS.map(d=>`<div class="wk-day"><b>${d.full} · ${esc(S.program[d.id].name)}</b>${S.program[d.id].exercises.map(e=>`<div class="wk-ex"><span>${esc(e.name)}</span><span>${esc(planText(e, wk))}</span></div>`).join("")}</div>`).join("") : ""}
+    </section>`;
+  }
+  out += `<div class="row-acts" style="margin-top:14px"><button class="btn btn-ghost" data-replan>Начать план заново с этой недели</button></div>`;
+  return out;
+}
 
 function renderHistory(){
   if(!S.history.length) return `<div class="empty">Здесь появятся завершённые тренировки.<br>Начните первую на вкладке «Тренировки».</div>`;
@@ -562,6 +640,7 @@ function renderSession(){
           <div class="photo">${photoHTML(e.exId)}</div>
         </button>
         ${open ? `<div class="ex-body">
+          ${e.planNote ? `<p class="last" style="color:var(--lime-text);font-weight:800">${esc(e.planNote)}</p>` : ""}
           <p class="last">${lt ? `В прошлый раз: ${lt.e.sets.filter(s=>s.done).map(s=>`${fmtW(s.w)}×${esc(s.r)}`).join(", ")}` : "Первый раз — без истории"}${rec ? ` · рекорд ${fmtW(rec.w)} кг × ${esc(rec.r)}` : ""}</p>
           ${canBump(e, lt) ? `<button class="btn btn-lime btn-block" style="margin-bottom:10px" data-bump="${i}">В прошлый раз всё выполнено — добавить +2,5 кг</button>` : ""}
           <div class="set-head"><span>#</span><span>Вес</span><span>Повторы</span><span></span><span></span></div>
@@ -614,7 +693,13 @@ function startWorkout(dayId){
   if(S.active){ toast("Сначала завершите текущую тренировку"); return; }
   if(!p.exercises.length){ toast("Добавьте упражнения в эту тренировку"); return; }
   S.active = {id:uid(), dayId, name:p.name, start:Date.now(),
-    exercises:p.exercises.map(e=>({exId:e.id, name:e.name, rest:e.rest||REST_SET, done:false, sets:e.sets.map(s=>({w:s.w, r:s.r, done:false}))}))};
+    exercises:p.exercises.map(e=>{
+      const wk = planWeek(), pf = planFor(e, wk);
+      const sets = pf ? Array.from({length:pf.sets},(_,j)=>({w:pf.w==="" ? (e.sets[j]||e.sets[0]||{w:""}).w : String(pf.w).replace(".",","), r:String(pf.r), done:false}))
+                      : e.sets.map(s=>({w:s.w, r:s.r, done:false}));
+      return {exId:e.id, name:e.name, rest:e.rest||REST_SET, done:false, sets,
+        planNote: pf ? `План · неделя ${wk}${weekTag(wk) ? " ("+weekTag(wk)+")" : ""}: ${planText(e, wk)}` : ""};
+    })};
   view.openEx = S.active.exercises[0].exId; view.tab = "session";
   saveMain(); render(); window.scrollTo(0,0); keepAwake();
 }
@@ -723,6 +808,8 @@ document.addEventListener("click", async e=>{
   }
   if("importfile" in d){ document.getElementById("backupInput").click(); return; }
   if("importtext" in d){ importJSON(document.getElementById("bkin").value); return; }
+  if(d.week){ view.openWeek = view.openWeek===+d.week ? 0 : +d.week; render(); return; }
+  if("replan" in d){ if(await ask("Начать 12-недельный план заново? Неделя 1 начнётся с этого понедельника.", "Начать")){ S.planStart = weekStart(); view.openWeek = 1; saveMain(); render(); toast("План запущен с этой недели"); } return; }
   if(d.rec){ view.openRec = view.openRec===d.rec ? null : d.rec; render(); return; }
   if(d.hist){ view.openHist = view.openHist===d.hist ? null : d.hist; render(); return; }
   if(d.delhist){
